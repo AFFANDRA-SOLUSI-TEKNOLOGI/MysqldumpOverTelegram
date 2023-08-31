@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 module.exports.config = {
-  "cron": "* * * * *",
+  "cron": "0 0 * * *",
   "telegram": {
     "bot_token": process.env.TG_BOT_TOKEN,
     "chat_id": process.env.TG_CHAT_ID, // where the backup file will be sent.

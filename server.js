@@ -1,40 +1,66 @@
 require("dotenv").config();
-const fs = require("fs");
 const mysql = require("mysql");
 const cron = require("node-cron");
 const { exec } = require("child_process");
+const { databases } = require("./config.js");
+const path = require("path");
+const fs = require("fs");
 
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-
-const backupDatabase = () => {
+const backupDatabase = (database) => {
   const currentDate = new Date();
   const formattedDate = currentDate.toISOString().replace(/:/g, "-");
-  const backupFilename = `backup-guruku-${formattedDate}.sql`;
+  const backupFilename = `backup-${database.name}-${formattedDate}.sql`;
+  const backupPath = path.join(__dirname, "database", database.name);
 
-  const backupCommand = `mysqldump -u ${process.env.DB_USER} -p="${process.env.DB_PASSWORD}" --databases ${process.env.DB_NAME} > ${backupFilename}`;
+  if (!fs.existsSync(backupPath)) {
+    fs.mkdirSync(backupPath, { recursive: true });
+  }
 
-  //   connection.connect();
-
-  connection.query("SHOW DATABASES", (error, results) => {
-    if (error) throw error;
-
-    const databaseNames = results.map((result) => result.Database);
-    if (databaseNames.includes(process.env.DB_NAME)) {
-      // Perform backup command
-      exec(backupCommand, (error, stdout, stderr) => {
-        if (error) throw error;
-        console.log("Backup completed:", backupFilename);
-      });
-    }
+  const connection = mysql.createConnection({
+    host: database.host || "localhost",
+    user: database.user,
+    password: database.password,
+    database: database.name,
   });
 
-  //   connection.end();
+  connection.connect((error) => {
+    if (error) {
+      console.error(`Error connecting to ${database.name}: ${error}`);
+      return;
+    }
+
+    connection.query("SHOW DATABASES", (error, results) => {
+      if (error) {
+        console.error(`Error querying databases for ${database.name}: ${error}`);
+        connection.destroy();
+        return;
+      }
+
+      const databaseNames = results.map((result) => result.Database);
+      if (databaseNames.includes(database.name)) {
+        const backupCommand = `mysqldump -u ${database.user} -p="${database.password}" --databases ${database.name} > ${backupPath}/${backupFilename}`;
+
+        // Perform backup command
+        exec(backupCommand, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Error performing backup for ${database.name}: ${error}`);
+          } else {
+            console.log(`Backup completed for ${database.name}:`, backupFilename);
+          }
+
+          connection.end();
+        });
+      } else {
+        console.error(`Database ${database.name} not found.`);
+        connection.end();
+      }
+    });
+  });
 };
 
-// Schedule backup to run every day at 2 AM
-cron.schedule("* * * * *", backupDatabase);
+cron.schedule("* * * * *", () => {
+  console.log("Starting cron job...");
+  databases.forEach((database) => {
+    backupDatabase(database);
+  });
+});

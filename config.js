@@ -4,7 +4,7 @@ module.exports.config = {
   "telegram": {
     "bot_token": process.env.TG_BOT_TOKEN,
     "chat_id": process.env.TG_CHAT_ID,
-    "whitelisted_user_id": ['5063217638']
+    "whitelisted_user_id": []
   },
   "dayjs": {
     "locale": require('dayjs/locale/id'),

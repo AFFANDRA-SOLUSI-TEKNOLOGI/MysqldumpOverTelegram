@@ -6,7 +6,6 @@ const fs = require("fs");
 const mysql = require("mysql");
 const mysqldump = require('mysqldump');
 const cron = require("node-cron");
-const { exec } = require("child_process");
 const { config, databases } = require("./config.js");
 
 const dayjs = require('dayjs');
@@ -17,6 +16,9 @@ dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(config.dayjs.timezone);
+
+const { Telegraf } = require('telegraf');
+const bot = new Telegraf(config.telegram.bot_token);
 
 const backupDatabase = (database) => {
   const connectionConfig = {
@@ -29,7 +31,8 @@ const backupDatabase = (database) => {
 
   const formattedDate = dayjs().format(config.dayjs.format);
   const backupFilename = `${database.name} ${formattedDate}.sql`;
-  const backupPath = path.join(__dirname, "database", database.name);
+  const backupPath = path.join(__dirname, "tmp", database.name);
+  const dumpPath = `${backupPath}/${backupFilename}`;
 
   if (!fs.existsSync(backupPath)) {
     fs.mkdirSync(backupPath, { recursive: true });
@@ -55,9 +58,16 @@ const backupDatabase = (database) => {
         try {
           await mysqldump({
             connection: connectionConfig,
-            dumpToFile: `${backupPath}/${backupFilename}`,
+            dumpToFile: dumpPath,
           });
   
+          await bot.telegram.sendDocument(config.telegram.chat_id, {
+            source: fs.createReadStream(dumpPath),
+            filename: backupFilename
+          });
+
+          await fs.rmSync(dumpPath);
+
           connection.end();
         } catch (err) {
           console.error(err);
@@ -77,3 +87,9 @@ cron.schedule("* * * * *", () => {
     backupDatabase(database);
   });
 });
+
+bot.launch();
+
+// Enable graceful stop
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));

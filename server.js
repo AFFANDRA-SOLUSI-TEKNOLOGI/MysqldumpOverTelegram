@@ -1,15 +1,25 @@
 require("dotenv").config();
-const mysql = require("mysql");
-const cron = require("node-cron");
-const { exec } = require("child_process");
-const { databases } = require("./config.js");
+
 const path = require("path");
 const fs = require("fs");
 
+const mysql = require("mysql");
+const cron = require("node-cron");
+const { exec } = require("child_process");
+const { config, databases } = require("./config.js");
+
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+dayjs.locale(config.dayjs.locale);
+dayjs.extend(utc)
+dayjs.extend(timezone)
+
 const backupDatabase = (database) => {
-  const currentDate = new Date();
-  const formattedDate = currentDate.toISOString().replace(/:/g, "-");
-  const backupFilename = `backup-${database.name}-${formattedDate}.sql`;
+  const currentDate = dayjs().tz(config.dayjs.timezone);
+  const formattedDate = currentDate.format(config.dayjs.format);
+  const backupFilename = `${database.name} ${formattedDate}.sql`;
   const backupPath = path.join(__dirname, "database", database.name);
 
   if (!fs.existsSync(backupPath)) {
@@ -21,6 +31,7 @@ const backupDatabase = (database) => {
     user: database.user,
     password: database.password,
     database: database.name,
+    port: database.port || 3306
   });
 
   connection.connect((error) => {
@@ -38,7 +49,7 @@ const backupDatabase = (database) => {
 
       const databaseNames = results.map((result) => result.Database);
       if (databaseNames.includes(database.name)) {
-        const backupCommand = `mysqldump -u ${database.user} -p="${database.password}" --databases ${database.name} > ${backupPath}/${backupFilename}`;
+        const backupCommand = `mysqldump -u ${database.user} -p="${database.password}" --databases ${database.name} > "${backupPath}/${backupFilename}"`;
 
         // Perform backup command
         exec(backupCommand, (error, stdout, stderr) => {

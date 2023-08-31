@@ -4,8 +4,8 @@ module.exports.config = {
   "cron": "* * * * *",
   "telegram": {
     "bot_token": process.env.TG_BOT_TOKEN,
-    "chat_id": process.env.TG_CHAT_ID,
-    "whitelisted_user_id": []
+    "chat_id": process.env.TG_CHAT_ID, // where the backup file will be sent.
+    "whitelisted_user_id": [] // only they can execute bot commands
   },
   "dayjs": {
     "locale": require('dayjs/locale/id'),

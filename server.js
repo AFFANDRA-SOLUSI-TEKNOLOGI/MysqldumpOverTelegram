@@ -86,7 +86,7 @@ const backupDatabase = (database) => {
   });
 };
 
-cron.schedule("* * * * *", () => {
+cron.schedule(config.cron, () => {
   console.log("Starting cron job...");
   databases.forEach((database) => {
     backupDatabase(database);

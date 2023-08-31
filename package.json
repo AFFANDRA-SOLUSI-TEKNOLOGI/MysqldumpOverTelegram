@@ -11,11 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^8.5.2",
     "dayjs": "^1.11.9",
     "dotenv": "^16.3.1",
     "mysql": "^2.18.1",
     "mysqldump": "^3.2.0",
     "node-cron": "^3.0.2",
+    "quick.db": "^9.1.7",
     "telegraf": "^4.12.2"
   }
 }

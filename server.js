@@ -8,6 +8,9 @@ const mysqldump = require('mysqldump');
 const cron = require("node-cron");
 const { config, databases } = require("./config.js");
 
+const { QuickDB } = require("quick.db");
+const db = new QuickDB(); 
+
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
@@ -29,7 +32,8 @@ const backupDatabase = (database) => {
     port: database.port || 3306
   }
 
-  const formattedDate = dayjs().format(config.dayjs.format);
+  const dateNow = dayjs();
+  const formattedDate = dateNow.format(config.dayjs.format);
   const backupFilename = `${database.name} ${formattedDate}.sql`;
   const backupPath = path.join(__dirname, "tmp", database.name);
   const dumpPath = `${backupPath}/${backupFilename}`;
@@ -61,11 +65,12 @@ const backupDatabase = (database) => {
             dumpToFile: dumpPath,
           });
   
-          await bot.telegram.sendDocument(config.telegram.chat_id, {
+          let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {
             source: fs.createReadStream(dumpPath),
             filename: backupFilename
           });
 
+          await db.set(`${dateNow.format('DD/MM/YY')}.${connectionConfig.database}`, sendToTelegram.message_id);
           await fs.rmSync(dumpPath);
 
           connection.end();
@@ -87,6 +92,25 @@ cron.schedule("* * * * *", () => {
     backupDatabase(database);
   });
 });
+
+bot.use(async(ctx, next) => {
+  if(!config.telegram.whitelisted_user_id.includes(ctx.from.id.toString())) return ctx.reply(`👀`);
+  next();
+});
+
+bot.start((ctx) => ctx.reply('Hello World'));
+
+bot.command('get', async(ctx) => {
+  let args = ctx.update.message.text.split(" ");
+  args.shift();
+
+  if(args.length < 2) return ctx.reply('needed args: DD/MM/YY databasename');
+
+  let messageId = await db.get(`${args[0]}.${args[1]}`);
+  if(!messageId) return ctx.reply('Can\'t get message id from database!');
+
+  ctx.telegram.forwardMessage(ctx.from.id, config.telegram.chat_id, messageId);
+})
 
 bot.launch();
 

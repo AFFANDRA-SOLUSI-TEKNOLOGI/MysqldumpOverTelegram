@@ -4,23 +4,24 @@ const path = require("path");
 const fs = require("fs");
 
 const mysql = require("mysql");
-const mysqldump = require('mysqldump');
+const mysqldump = require("mysqldump");
 const cron = require("node-cron");
 const { config, databases } = require("./config.js");
+const { createLog } = require("./utils/logs.js");
 
 const { QuickDB } = require("quick.db");
-const db = new QuickDB(); 
+const db = new QuickDB();
 
-const dayjs = require('dayjs');
-const utc = require('dayjs/plugin/utc');
-const timezone = require('dayjs/plugin/timezone');
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
 
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(config.dayjs.timezone);
 
-const { Telegraf } = require('telegraf');
+const { Telegraf } = require("telegraf");
 const bot = new Telegraf(config.telegram.bot_token);
 
 const backupDatabase = (database) => {
@@ -29,8 +30,8 @@ const backupDatabase = (database) => {
     user: database.user,
     password: database.password,
     database: database.name,
-    port: database.port || 3306
-  }
+    port: database.port || 3306,
+  };
 
   const dateNow = dayjs();
   const formattedDate = dateNow.format(config.dayjs.format);
@@ -64,14 +65,21 @@ const backupDatabase = (database) => {
             connection: connectionConfig,
             dumpToFile: dumpPath,
           });
-  
+
           let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {
             source: fs.createReadStream(dumpPath),
-            filename: backupFilename
+            filename: backupFilename,
           });
 
-          await db.set(`${dateNow.format('DD/MM/YY')}.${connectionConfig.database}`, sendToTelegram.message_id);
-          await fs.rmSync(dumpPath);
+          await db.set(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
+          fs.rmSync(dumpPath);
+
+          if (config.logs) {
+            createLog({
+              date: formattedDate,
+              name: backupFilename,
+            });
+          }
 
           connection.end();
         } catch (err) {
@@ -93,27 +101,42 @@ cron.schedule(config.cron, () => {
   });
 });
 
-bot.use(async(ctx, next) => {
-  if(!config.telegram.whitelisted_user_id.includes(ctx.from.id.toString())) return ctx.reply(`👀`);
+bot.use(async (ctx, next) => {
+  if (!config.telegram.whitelisted_user_id.includes(ctx.from.id.toString())) return ctx.reply(`👀`);
   next();
 });
 
-bot.start((ctx) => ctx.reply('Hello World'));
+bot.start((ctx) => ctx.reply("Hello World"));
 
-bot.command('get', async(ctx) => {
+bot.command("get", async (ctx) => {
   let args = ctx.update.message.text.split(" ");
   args.shift();
 
-  if(args.length < 2) return ctx.reply('needed args: DD/MM/YY databasename');
+  if (args.length < 2) return ctx.reply("needed args: DD/MM/YY databasename");
 
   let messageId = await db.get(`${args[0]}.${args[1]}`);
-  if(!messageId) return ctx.reply('Can\'t get message id from database!');
+  if (!messageId) return ctx.reply("Can't get message id from database!");
 
   ctx.telegram.forwardMessage(ctx.from.id, config.telegram.chat_id, messageId);
-})
+});
+
+bot.command("logs", async (ctx) => {
+  if (!config.logs) return ctx.reply("Logs system are disabled.");
+  let args = ctx.update.message.text.split(" ");
+  args.shift();
+
+  if (!args.length) return ctx.reply("logs name is required!");
+
+  try {
+    const logContent = fs.readFileSync(`./logs/${args[0]}/logs-${args[0]}.log`, { encoding: "utf-8" });
+    return ctx.reply(logContent);
+  } catch (error) {
+    return ctx.reply(`No such ${args[0]} log file were found.`);
+  }
+});
 
 bot.launch();
 
 // Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));

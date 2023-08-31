@@ -18,19 +18,21 @@ module.exports.config = {
 };
 
 module.exports.databases = [
+  /*
+    Each Database Credentials should be stored as one object with property consists of :
+
+    name: required,
+    host: required || default localhost or 127.0.0.1,
+    port: required || default 3306,
+    user: required,
+    password: required,
+  */
+
   {
     name: process.env.DB_NAME_TEACHERMATE,
     host: process.env.DB_HOST_TEACHERMATE,
     port: process.env.DB_PORT_TEACHERMATE,
     user: process.env.DB_USER_TEACHERMATE,
     password: process.env.DB_USER_PASSWORD_TEACHERMATE,
-  },
-
-  {
-    name: process.env.DB_NAME_SARPRAS,
-    host: process.env.DB_HOST_SARPRAS,
-    port: process.env.DB_PORT_SARPRAS,
-    user: process.env.DB_USER_SARPRAS,
-    password: process.env.DB_USER_PASSWORD_SARPRAS,
   },
 ];

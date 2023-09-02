@@ -1,17 +1,21 @@
-import { config as dotenvconfig } from "dotenv";
-dotenvconfig();
-import { Telegraf, Context } from "telegraf";
-import { config, databases } from "./config";
-import { createConnection } from "mysql";
+import dotenv from "dotenv";
+dotenv.config();
+
 import path from "path";
 import fs from "fs";
-import mysqldump from "mysqldump";
+import cron from "node-cron";
+import mysqldump, { ConnectionOptions } from "mysqldump";
+
+import { Telegraf, Context } from "telegraf";
+import { ConnectionConfig, createConnection } from "mysql";
 import { QuickDB } from "quick.db";
+
 import { createLog } from "./utils/logs";
+import { config, databases } from "./config";
+
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import cron from "node-cron";
 
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
@@ -21,7 +25,7 @@ dayjs.tz.setDefault(config.dayjs.timezone);
 const bot = new Telegraf(config.telegram.bot_token);
 const db = new QuickDB();
 
-const main = (database: IDatabase) => {
+const main = (database: DatabaseConfig) => {
   const connectionConfig = {
     host: database.host || "127.0.0.1",
     user: database.user,
@@ -36,7 +40,7 @@ const main = (database: IDatabase) => {
   const backupPath = path.join(__dirname, "tmp", database.name);
   const dumpPath = `${backupPath}/${backupFilename}`;
 
-  const connection = createConnection(connectionConfig);
+  const connection = createConnection(connectionConfig as ConnectionConfig);
 
   connection.connect((error) => {
     if (error) {
@@ -55,7 +59,7 @@ const main = (database: IDatabase) => {
       if (databaseNames.includes(database.name)) {
         try {
           await mysqldump({
-            connection: connectionConfig,
+            connection: connectionConfig as ConnectionOptions,
             dumpToFile: dumpPath,
           });
 
@@ -89,7 +93,7 @@ const main = (database: IDatabase) => {
 
 cron.schedule(config.cron, () => {
   console.log("Starting cron job...");
-  databases.forEach((database: IDatabase) => {
+  databases.forEach((database: DatabaseConfig) => {
     main(database);
   });
 });
@@ -130,7 +134,7 @@ bot.command("logs", async (ctx) => {
   }
 });
 
-bot.launch();
+bot.launch().then(() => console.log("Bot ready!"));
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));

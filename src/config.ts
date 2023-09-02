@@ -1,24 +1,7 @@
-import { config as dotenvconfig } from "dotenv";
-dotenvconfig();
+import dotenv from "dotenv";
+dotenv.config();
 
-interface IConfig {
-  cron: string;
-  telegram: {
-    bot_token: string;
-    chat_id: string;
-    whitelisted_user_id: string[];
-  };
-
-  dayjs: {
-    locale: string;
-    timezone: string;
-    format: string;
-  };
-
-  logs: boolean;
-}
-
-const config: IConfig = {
+const config: Config = {
   cron: "0 0 * * *",
   telegram: {
     bot_token: process.env.TG_BOT_TOKEN || "",
@@ -35,7 +18,7 @@ const config: IConfig = {
   logs: false,
 };
 
-const databases: IDatabase[] = [
+const databases: DatabaseConfig[] = [
   {
     name: process.env.DB_NAME_TEACHERMATE || "",
     host: process.env.DB_HOST_TEACHERMATE || "",
@@ -53,4 +36,4 @@ const databases: IDatabase[] = [
   },
 ];
 
-export { IConfig, config, databases };
+export { config, databases };

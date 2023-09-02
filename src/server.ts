@@ -40,6 +40,10 @@ const main = (database: DatabaseConfig) => {
   const backupPath = path.join(__dirname, "tmp", database.name);
   const dumpPath = `${backupPath}/${backupFilename}`;
 
+  if (!fs.existsSync(backupPath)) {
+    fs.mkdirSync(backupPath, { recursive: true });
+  }
+
   const connection = createConnection(connectionConfig as ConnectionConfig);
 
   connection.connect((error) => {

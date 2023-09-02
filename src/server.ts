@@ -4,6 +4,7 @@ dotenv.config();
 import path from "path";
 import fs from "fs";
 import cron from "node-cron";
+import express from "express";
 import mysqldump, { ConnectionOptions } from "mysqldump";
 
 import { Telegraf, Context } from "telegraf";
@@ -25,6 +26,7 @@ dayjs.tz.setDefault(config.dayjs.timezone);
 const bot = new Telegraf(config.telegram.bot_token);
 const jsonDriver = new JSONDriver();
 const db = new QuickDB({ driver: jsonDriver });
+const app = express();
 
 const main = (database: DatabaseConfig) => {
   const connectionConfig = {
@@ -218,7 +220,10 @@ bot.command("delete", async (ctx) => {
 
   await db.pull('databases', (x: any) => x.name === database.name);
   ctx.reply("Deleted!");
-})
+});
+
+app.get('/', (req, res) => res.sendStatus(200));
+app.listen(process.env.PORT, () => console.log('App listening on port', process.env.PORT));
 
 bot.launch();
 

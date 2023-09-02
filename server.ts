@@ -1,32 +1,29 @@
-require("dotenv").config();
-
-const path = require("path");
-const fs = require("fs");
-
-const mysql = require("mysql");
-const mysqldump = require("mysqldump");
-const cron = require("node-cron");
-const { config, databases } = require("./config.js");
-const { createLog } = require("./utils/logs.js");
-
-const { QuickDB } = require("quick.db");
-const db = new QuickDB();
-
-const dayjs = require("dayjs");
-const utc = require("dayjs/plugin/utc");
-const timezone = require("dayjs/plugin/timezone");
+import { config as dotenvconfig } from "dotenv";
+dotenvconfig();
+import { Telegraf, Context } from "telegraf";
+import { config, databases } from "./config";
+import { createConnection } from "mysql";
+import path from "path";
+import fs from "fs";
+import mysqldump from "mysqldump";
+import { QuickDB } from "quick.db";
+import { createLog } from "./utils/logs";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import cron from "node-cron";
 
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(config.dayjs.timezone);
 
-const { Telegraf } = require("telegraf");
 const bot = new Telegraf(config.telegram.bot_token);
+const db = new QuickDB();
 
-const backupDatabase = (database) => {
+const main = (database: IDatabase) => {
   const connectionConfig = {
-    host: database.host || "localhost",
+    host: database.host || "127.0.0.1",
     user: database.user,
     password: database.password,
     database: database.name,
@@ -39,11 +36,7 @@ const backupDatabase = (database) => {
   const backupPath = path.join(__dirname, "tmp", database.name);
   const dumpPath = `${backupPath}/${backupFilename}`;
 
-  if (!fs.existsSync(backupPath)) {
-    fs.mkdirSync(backupPath, { recursive: true });
-  }
-
-  const connection = mysql.createConnection(connectionConfig);
+  const connection = createConnection(connectionConfig);
 
   connection.connect((error) => {
     if (error) {
@@ -58,7 +51,7 @@ const backupDatabase = (database) => {
         return;
       }
 
-      const databaseNames = results.map((result) => result.Database);
+      const databaseNames = results.map((result: any) => result.Database);
       if (databaseNames.includes(database.name)) {
         try {
           await mysqldump({
@@ -96,12 +89,14 @@ const backupDatabase = (database) => {
 
 cron.schedule(config.cron, () => {
   console.log("Starting cron job...");
-  databases.forEach((database) => {
-    backupDatabase(database);
+  databases.forEach((database: IDatabase) => {
+    main(database);
   });
 });
 
-bot.use(async (ctx, next) => {
+bot.use(async (ctx: Context, next) => {
+  if (!ctx.from) return;
+
   if (!config.telegram.whitelisted_user_id.includes(ctx.from.id.toString())) return ctx.reply(`👀`);
   next();
 });

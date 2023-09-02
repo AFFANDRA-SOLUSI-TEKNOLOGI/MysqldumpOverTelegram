@@ -23,7 +23,7 @@ const config: IConfig = {
   telegram: {
     bot_token: process.env.TG_BOT_TOKEN || "",
     chat_id: process.env.TG_CHAT_ID || "",
-    whitelisted_user_id: [process.env.TG_USER_OCHA || ""],
+    whitelisted_user_id: [],
   },
 
   dayjs: {

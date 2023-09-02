@@ -11,7 +11,7 @@ import { ConnectionConfig, createConnection } from "mysql";
 import { QuickDB } from "quick.db";
 
 import { createLog } from "./utils/logs";
-import { config, databases } from "./config";
+import { config } from "./config";
 
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -95,8 +95,10 @@ const main = (database: DatabaseConfig) => {
   });
 };
 
-cron.schedule(config.cron, () => {
+cron.schedule(config.cron, async() => {
   console.log("Starting cron job...");
+  const databases = await db.get('databases');
+
   databases.forEach((database: DatabaseConfig) => {
     main(database);
   });
@@ -138,7 +140,84 @@ bot.command("logs", async (ctx) => {
   }
 });
 
-bot.launch().then(() => console.log("Bot ready!"));
+bot.command("new", async (ctx) => {
+  let args = ctx.update.message.text.split(" ");
+  args.shift();
+
+  const [name, host, port, user, password] = args;
+
+  if(!name || !host || !port || !user || !password) return ctx.reply("usage: /new db_name db_host db_port db_username db_password\n\n* empty password? just use %empty%");
+
+  const get = await db.get('databases');
+  if(get && get.find((x: any) => x.name === name)) return ctx.reply("Databases already exists!");
+
+  await db.push('databases', { name, host, port, user, password: password === "%empty%" ? "" : password });
+  ctx.reply("Successfully added!");
+});
+
+bot.command("edit", async (ctx) => {
+  let args = ctx.update.message.text.split(" ");
+  args.shift();
+
+  let [name, type, new_value] = args;
+  const types = "name, host, port, user, password";
+
+  if(!name || !type || !new_value || !types.split(", ").includes(type)) return ctx.reply(`usage: /edit db_name type new_value\n\n- Available types: ${types}.`);
+
+  let get = await db.get('databases');
+  let database = get.find((x: any) => x.name === name);
+  if(!database) return ctx.reply("Database doesn't exists!");
+
+  let edited: any = {
+    name: database.name,
+    host: database.host,
+    port: database.port,
+    user: database.username,
+    password: database.password
+  }
+
+  if(new_value === "%empty%") new_value = "";
+  edited[type] = new_value;
+
+  await db.pull('databases', (x: any) => x.name === database.name);
+  await db.push('databases', edited);
+  ctx.reply("Successfully edited!");
+});
+
+bot.command("list", async (ctx) => {
+  let get = await db.get('databases');
+  let arr: any = [];
+
+  get.map((x: any) => arr.push(x.name));
+  ctx.reply(arr.length ? arr.join(", ") : 'empty.');
+})
+
+bot.command("view", async (ctx) => {
+  let args = ctx.update.message.text.split(" ");
+  args.shift();
+
+  if(!args.length) return ctx.reply("argument needed!");
+  let get = await db.get('databases');
+  let database = get.find((x: any) => x.name === args[0]);
+  if(!database) return ctx.reply("Database doesn't exists!");
+
+  ctx.reply(`Name: ${database.name}\nHost: ${database.host}:${database.port}\nUser: ${database.user}\nPassword: ${database.password}`);
+});
+
+bot.command("delete", async (ctx) => {
+  let args = ctx.update.message.text.split(" ");
+  args.shift();
+
+  if(!args.length) return ctx.reply("argument needed!");
+  let get = await db.get('databases');
+  let database = get.find((x: any) => x.name === args[0]);
+  if(!database) return ctx.reply("Database doesn't exists!");
+
+  await db.pull('databases', (x: any) => x.name === database.name);
+  ctx.reply("Deleted!");
+})
+
+bot.launch();
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));

@@ -8,7 +8,7 @@ import mysqldump, { ConnectionOptions } from "mysqldump";
 
 import { Telegraf, Context } from "telegraf";
 import { ConnectionConfig, createConnection } from "mysql";
-import { QuickDB } from "quick.db";
+import { QuickDB, JSONDriver } from "quick.db";
 
 import { createLog } from "./utils/logs";
 import { config } from "./config";
@@ -23,7 +23,8 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault(config.dayjs.timezone);
 
 const bot = new Telegraf(config.telegram.bot_token);
-const db = new QuickDB();
+const jsonDriver = new JSONDriver();
+const db = new QuickDB({ driver: jsonDriver });
 
 const main = (database: DatabaseConfig) => {
   const connectionConfig = {
@@ -188,8 +189,10 @@ bot.command("list", async (ctx) => {
   let get = await db.get('databases');
   let arr: any = [];
 
+  if(!get.length) return ctx.reply('empty');
+
   get.map((x: any) => arr.push(x.name));
-  ctx.reply(arr.length ? arr.join(", ") : 'empty.');
+  ctx.reply(arr.join(", "));
 })
 
 bot.command("view", async (ctx) => {

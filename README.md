@@ -15,9 +15,13 @@ pnpm i
 # copy .env.example to .env
 cp .env.example .env
 
-# now you can configure what database connection you want to backup and other things you need in config.js & .env
+# now you can configure what database connection you want to 
+# backup and other things you need in config.js & .env
+
+# build the project
+pnpm build
 
 # start the project
-node server
+pnpm start
 ```
 

@@ -1,12 +1,12 @@
 {
-  "name": "backup-db",
+  "name": "mysqldumpovertelegram",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./dist/server",
-    "build": "tsc"
+    "clear": "rimraf dist",
+    "start": "node .",
+    "build": "npm run clear && tsc"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +25,7 @@
     "@types/better-sqlite3": "^7.6.4",
     "@types/mysql": "^2.15.21",
     "@types/node-cron": "^3.0.8",
+    "rimraf": "^5.0.1",
     "typescript": "^5.2.2"
   }
 }

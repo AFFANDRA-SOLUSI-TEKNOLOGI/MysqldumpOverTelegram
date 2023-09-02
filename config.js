@@ -5,7 +5,7 @@ module.exports.config = {
   telegram: {
     bot_token: process.env.TG_BOT_TOKEN,
     chat_id: process.env.TG_CHAT_ID, // where the backup file will be sent.
-    whitelisted_user_id: [process.env.TG_USER_OCHA], // only they can execute bot commands
+    whitelisted_user_id: [], // only they can execute bot commands
   },
 
   dayjs: {

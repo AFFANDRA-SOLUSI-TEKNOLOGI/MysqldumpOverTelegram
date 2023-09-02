@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node ./dist/server",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -19,5 +20,11 @@
     "node-cron": "^3.0.2",
     "quick.db": "^9.1.7",
     "telegraf": "^4.12.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.4",
+    "@types/mysql": "^2.15.21",
+    "@types/node-cron": "^3.0.8",
+    "typescript": "^5.2.2"
   }
 }

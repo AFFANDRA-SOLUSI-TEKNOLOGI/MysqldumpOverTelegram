@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
-const createLog = (database) => {
+const createLog = (database: { date: string; name: string }) => {
   try {
     const timestamp = new Date().toISOString();
     const logsPath = path.join(__dirname, "../logs", database.name.split(" ")[0]);
@@ -17,4 +17,4 @@ const createLog = (database) => {
   }
 };
 
-module.exports = { createLog };
+export { createLog };

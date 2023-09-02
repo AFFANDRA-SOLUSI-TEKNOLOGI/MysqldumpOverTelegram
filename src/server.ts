@@ -21,7 +21,6 @@ import timezone from "dayjs/plugin/timezone";
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.tz.setDefault(config.dayjs.timezone);
 
 const bot = new Telegraf(config.telegram.bot_token);
 const jsonDriver = new JSONDriver();
@@ -37,7 +36,7 @@ const main = (database: DatabaseConfig) => {
     port: database.port || 3306,
   };
 
-  const dateNow = dayjs();
+  const dateNow = dayjs().tz(config.dayjs.timezone);
   const formattedDate = dateNow.format(config.dayjs.format);
   const backupFilename = `${database.name} ${formattedDate}.sql`;
   const backupPath = path.join(__dirname, "tmp", database.name);

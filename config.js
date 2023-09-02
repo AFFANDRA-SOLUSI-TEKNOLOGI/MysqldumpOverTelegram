@@ -14,7 +14,7 @@ module.exports.config = {
     format: "DD MMM YYYY [pada] HH.mm",
   },
 
-  logs: true,
+  logs: false,
 };
 
 module.exports.databases = [

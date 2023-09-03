@@ -266,7 +266,7 @@ bot.action(/.+/, async(ctx) => {
 })
 
 app.get('/', (req, res) => res.sendStatus(200));
-// app.listen(process.env.PORT, () => console.log('App listening on port', process.env.PORT));
+app.listen(process.env.PORT, () => console.log('App listening on port', process.env.PORT));
 
 bot.launch();
 

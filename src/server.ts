@@ -7,7 +7,7 @@ import cron from "node-cron";
 import express from "express";
 import mysqldump, { ConnectionOptions } from "mysqldump";
 
-import { Telegraf, Context } from "telegraf";
+import { Telegraf, Context, Markup } from "telegraf";
 import { ConnectionConfig, createConnection } from "mysql";
 import { QuickDB, JSONDriver } from "quick.db";
 
@@ -74,7 +74,7 @@ const main = (database: DatabaseConfig) => {
             filename: backupFilename,
           });
 
-          await db.set(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
+          await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
           fs.rmSync(dumpPath);
 
           if (config.logs) {
@@ -122,9 +122,16 @@ bot.command("get", async (ctx) => {
   if (args.length < 2) return ctx.reply("needed args: DD/MM/YY databasename");
 
   let messageId = await db.get(`${args[0]}.${args[1]}`);
-  if (!messageId) return ctx.reply("Can't get message id from database!");
+  if (!messageId.length) return ctx.reply("Can't get message id from database!");
 
-  ctx.telegram.forwardMessage(ctx.from.id, config.telegram.chat_id, messageId);
+  messageId.forEach((id: number) => {
+    try {
+      ctx.telegram.forwardMessage(ctx.from.id, config.telegram.chat_id, id);
+    } catch(err) {
+      console.log("[GET]", err);
+      ctx.reply("Somehting error here...")
+    }
+  });
 });
 
 bot.command("logs", async (ctx) => {
@@ -190,7 +197,7 @@ bot.command("list", async (ctx) => {
   let get = await db.get('databases');
   let arr: any = [];
 
-  if(!get.length) return ctx.reply('empty');
+  if(!get.length) return ctx.reply('empty.');
 
   get.map((x: any) => arr.push(x.name));
   ctx.reply(arr.join(", "));
@@ -221,8 +228,37 @@ bot.command("delete", async (ctx) => {
   ctx.reply("Deleted!");
 });
 
+bot.command("dump", async (ctx) => {
+  let get = await db.get('databases');
+
+  if(!get.length) return ctx.reply("You dont have any website to dump!");
+  let button: any = [];
+
+  get.map((x: any) => button.push(Markup.button.callback(x.name, `backup ${x.name}`)));
+
+  ctx.reply('Choose database that you want to dump:', {
+    ...Markup.inlineKeyboard(button)
+  })
+});
+
+bot.action(/.+/, async(ctx) => {
+  let text = ctx.match[0];  
+  let args = text.split(" ");
+  let action = args[0];
+  args.shift();
+
+  if(action  ==="backup") {
+    ctx.answerCbQuery(`dumping ${args[0]}...`)
+    if(!args.length) return ctx.answerCbQuery('argument needed.');
+    let queryDump = await db.get('databases');
+    let wantToDump = queryDump.find((x: any) => x.name === args[0]);
+    await main(wantToDump);
+    return ctx.reply("Yay! you should get the dump file in your channel or get it with /get command.");
+  }
+})
+
 app.get('/', (req, res) => res.sendStatus(200));
-app.listen(process.env.PORT, () => console.log('App listening on port', process.env.PORT));
+// app.listen(process.env.PORT, () => console.log('App listening on port', process.env.PORT));
 
 bot.launch();
 

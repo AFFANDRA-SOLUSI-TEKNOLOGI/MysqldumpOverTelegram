@@ -216,16 +216,16 @@ bot.command("view", async (ctx) => {
 });
 
 bot.command("delete", async (ctx) => {
-  let args = ctx.update.message.text.split(" ");
-  args.shift();
-
-  if(!args.length) return ctx.reply("argument needed!");
   let get = await db.get('databases');
-  let database = get.find((x: any) => x.name === args[0]);
-  if(!database) return ctx.reply("Database doesn't exists!");
 
-  await db.pull('databases', (x: any) => x.name === database.name);
-  ctx.reply("Deleted!");
+  if(!get.length) return ctx.reply("You dont have any website to delete!");
+  let button: any = [];
+
+  get.map((x: any) => button.push(Markup.button.callback(x.name, `delete ${x.name}`)));
+
+  ctx.reply('Choose database that you want to delete:', {
+    ...Markup.inlineKeyboard(button)
+  })
 });
 
 bot.command("dump", async (ctx) => {
@@ -247,13 +247,21 @@ bot.action(/.+/, async(ctx) => {
   let action = args[0];
   args.shift();
 
-  if(action  ==="backup") {
+  let dbs = await db.get('databases');
+  if(action  === "backup") {
     ctx.answerCbQuery(`dumping ${args[0]}...`)
     if(!args.length) return ctx.answerCbQuery('argument needed.');
-    let queryDump = await db.get('databases');
-    let wantToDump = queryDump.find((x: any) => x.name === args[0]);
+    let wantToDump = dbs.find((x: any) => x.name === args[0]);
     await main(wantToDump);
     return ctx.reply("Yay! you should get the dump file in your channel or get it with /get command.");
+  }
+
+  if(action === "delete") {
+    ctx.answerCbQuery(`deleting ${args[0]}...`)
+    if(!args.length) return ctx.answerCbQuery('argument needed.');
+    let wantToDelete = dbs.find((x: any) => x.name === args[0]);
+    await db.pull('databases', (x: any) => x.name === wantToDelete.name);
+    return ctx.editMessageText('Deleted!', { ...Markup.inlineKeyboard([]) });
   }
 })
 

@@ -97,9 +97,9 @@ const main = (database: DatabaseConfig) => {
   });
 };
 
-cron.schedule(config.cron, async() => {
+cron.schedule(config.cron, async () => {
   console.log("Starting cron job...");
-  const databases = await db.get('databases');
+  const databases = await db.get("databases");
 
   databases.forEach((database: DatabaseConfig) => {
     main(database);
@@ -127,9 +127,9 @@ bot.command("get", async (ctx) => {
   messageId.forEach((id: number) => {
     try {
       ctx.telegram.forwardMessage(ctx.from.id, config.telegram.chat_id, id);
-    } catch(err) {
+    } catch (err) {
       console.log("[GET]", err);
-      ctx.reply("Somehting error here...")
+      ctx.reply("Somehting error here...");
     }
   });
 });
@@ -155,12 +155,12 @@ bot.command("new", async (ctx) => {
 
   const [name, host, port, user, password] = args;
 
-  if(!name || !host || !port || !user || !password) return ctx.reply("usage: /new db_name db_host db_port db_username db_password\n\n* empty password? just use %empty%");
+  if (!name || !host || !port || !user || !password) return ctx.reply("usage: /new db_name db_host db_port db_username db_password\n\n* empty password? just use %empty%");
 
-  const get = await db.get('databases');
-  if(get && get.find((x: any) => x.name === name)) return ctx.reply("Databases already exists!");
+  const get = await db.get("databases");
+  if (get && get.find((x: any) => x.name === name)) return ctx.reply("Databases already exists!");
 
-  await db.push('databases', { name, host, port, user, password: password === "%empty%" ? "" : password });
+  await db.push("databases", { name, host, port, user, password: password === "%empty%" ? "" : password });
   ctx.reply("Successfully added!");
 });
 
@@ -171,102 +171,102 @@ bot.command("edit", async (ctx) => {
   let [name, type, new_value] = args;
   const types = "name, host, port, user, password";
 
-  if(!name || !type || !new_value || !types.split(", ").includes(type)) return ctx.reply(`usage: /edit db_name type new_value\n\n- Available types: ${types}.`);
+  if (!name || !type || !new_value || !types.split(", ").includes(type)) return ctx.reply(`usage: /edit db_name type new_value\n\n- Available types: ${types}.`);
 
-  let get = await db.get('databases');
+  let get = await db.get("databases");
   let database = get.find((x: any) => x.name === name);
-  if(!database) return ctx.reply("Database doesn't exists!");
+  if (!database) return ctx.reply("Database doesn't exists!");
 
   let edited: any = {
     name: database.name,
     host: database.host,
     port: database.port,
     user: database.username,
-    password: database.password
-  }
+    password: database.password,
+  };
 
-  if(new_value === "%empty%") new_value = "";
+  if (new_value === "%empty%") new_value = "";
   edited[type] = new_value;
 
-  await db.pull('databases', (x: any) => x.name === database.name);
-  await db.push('databases', edited);
+  await db.pull("databases", (x: any) => x.name === database.name);
+  await db.push("databases", edited);
   ctx.reply("Successfully edited!");
 });
 
 bot.command("list", async (ctx) => {
-  let get = await db.get('databases');
+  let get = await db.get("databases");
   let arr: any = [];
 
-  if(!get.length) return ctx.reply('empty.');
+  if (!get) return ctx.reply("empty.");
 
   get.map((x: any) => arr.push(x.name));
   ctx.reply(arr.join(", "));
-})
+});
 
 bot.command("view", async (ctx) => {
   let args = ctx.update.message.text.split(" ");
   args.shift();
 
-  if(!args.length) return ctx.reply("argument needed!");
-  let get = await db.get('databases');
+  if (!args.length) return ctx.reply("argument needed!");
+  let get = await db.get("databases");
   let database = get.find((x: any) => x.name === args[0]);
-  if(!database) return ctx.reply("Database doesn't exists!");
+  if (!database) return ctx.reply("Database doesn't exists!");
 
   ctx.reply(`Name: ${database.name}\nHost: ${database.host}:${database.port}\nUser: ${database.user}\nPassword: ${database.password}`);
 });
 
 bot.command("delete", async (ctx) => {
-  let get = await db.get('databases');
+  let get = await db.get("databases");
 
-  if(!get.length) return ctx.reply("You dont have any website to delete!");
+  if (!get) return ctx.reply("You dont have any website to delete!");
   let button: any = [];
 
   get.map((x: any) => button.push(Markup.button.callback(x.name, `delete ${x.name}`)));
 
-  ctx.reply('Choose database that you want to delete:', {
-    ...Markup.inlineKeyboard(button)
-  })
+  ctx.reply("Choose database that you want to delete:", {
+    ...Markup.inlineKeyboard(button),
+  });
 });
 
 bot.command("dump", async (ctx) => {
-  let get = await db.get('databases');
+  let get = await db.get("databases");
 
-  if(!get.length) return ctx.reply("You dont have any website to dump!");
+  if (!get) return ctx.reply("You dont have any website to dump!");
   let button: any = [];
 
   get.map((x: any) => button.push(Markup.button.callback(x.name, `backup ${x.name}`)));
 
-  ctx.reply('Choose database that you want to dump:', {
-    ...Markup.inlineKeyboard(button)
-  })
+  ctx.reply("Choose database that you want to dump:", {
+    ...Markup.inlineKeyboard(button),
+  });
 });
 
-bot.action(/.+/, async(ctx) => {
-  let text = ctx.match[0];  
+bot.action(/.+/, async (ctx) => {
+  let text = ctx.match[0];
   let args = text.split(" ");
   let action = args[0];
   args.shift();
 
-  let dbs = await db.get('databases');
-  if(action  === "backup") {
-    ctx.answerCbQuery(`dumping ${args[0]}...`)
-    if(!args.length) return ctx.answerCbQuery('argument needed.');
+  let dbs = await db.get("databases");
+  if (action === "backup") {
+    ctx.answerCbQuery(`dumping ${args[0]}...`);
+    if (!args.length) return ctx.answerCbQuery("argument needed.");
     let wantToDump = dbs.find((x: any) => x.name === args[0]);
     await main(wantToDump);
     return ctx.reply("Yay! you should get the dump file in your channel or get it with /get command.");
   }
 
-  if(action === "delete") {
-    ctx.answerCbQuery(`deleting ${args[0]}...`)
-    if(!args.length) return ctx.answerCbQuery('argument needed.');
+  if (action === "delete") {
+    ctx.answerCbQuery(`deleting ${args[0]}...`);
+    if (!args.length) return ctx.answerCbQuery("argument needed.");
     let wantToDelete = dbs.find((x: any) => x.name === args[0]);
-    await db.pull('databases', (x: any) => x.name === wantToDelete.name);
-    return ctx.editMessageText('Deleted!', { ...Markup.inlineKeyboard([]) });
+    await db.pull("databases", (x: any) => x.name === wantToDelete.name);
+    return ctx.editMessageText("Deleted!", { ...Markup.inlineKeyboard([]) });
   }
-})
+});
 
-app.get('/', (req, res) => res.sendStatus(200));
-app.listen(process.env.PORT, () => console.log('App listening on port', process.env.PORT));
+app.get("/", (req, res) => res.sendStatus(200));
+app.listen(process.env.PORT, () => console.log("App listening on port", process.env.PORT));
 
 bot.launch();
 

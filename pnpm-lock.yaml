@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -34,9 +34,6 @@ dependencies:
     version: 5.0.1
 
 devDependencies:
-  '@types/better-sqlite3':
-    specifier: ^7.6.4
-    version: 7.6.4
   '@types/express':
     specifier: ^4.17.17
     version: 4.17.17
@@ -73,12 +70,6 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  /@types/better-sqlite3@7.6.4:
-    resolution: {integrity: sha512-dzrRZCYPXIXfSR1/surNbJ/grU3scTaygS0OMzjlGf71i9sc2fGyHPXXiXmEvNIoE0cGwsanEFMVJxPXmco9Eg==}
-    dependencies:
-      '@types/node': 20.5.8
-    dev: true
 
   /@types/body-parser@1.19.2:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}

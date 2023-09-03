@@ -15,7 +15,7 @@ const config: Config = {
     format: "DD MMM YYYY [pada] HH.mm",
   },
 
-  logs: false,
+  logs: true,
 };
 
 export { config };

@@ -18,6 +18,15 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
+import logsCommand from "./commands/logs";
+import dbGetCommand from "./commands/database/dbGet";
+import dbNewCommand from "./commands/database/dbNew";
+import dbEditCommand from "./commands/database/dbEdit";
+import dbListCommand from "./commands/database/dbList";
+import dbViewCommand from "./commands/database/dbView";
+import dbDeleteCommand from "./commands/database/dbDelete";
+import dbDumpCommand from "./commands/database/dbDump";
+
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -116,129 +125,35 @@ bot.use(async (ctx: Context, next) => {
 bot.start((ctx) => ctx.reply("Hello World"));
 
 bot.command("get", async (ctx) => {
-  let args = ctx.update.message.text.split(" ");
-  args.shift();
-
-  if (args.length < 2) return ctx.reply("needed args: DD/MM/YY databasename");
-
-  let messageId = await db.get(`${args[0]}.${args[1]}`);
-  if (!messageId.length) return ctx.reply("Can't get message id from database!");
-
-  messageId.forEach((id: number) => {
-    try {
-      ctx.telegram.forwardMessage(ctx.from.id, config.telegram.chat_id, id);
-    } catch (err) {
-      console.log("[GET]", err);
-      ctx.reply("Somehting error here...");
-    }
-  });
+  await dbGetCommand(ctx);
 });
 
 bot.command("logs", async (ctx) => {
-  if (!config.logs) return ctx.reply("Logs system are disabled.");
-  let args = ctx.update.message.text.split(" ");
-  args.shift();
-
-  if (!args.length) return ctx.reply("logs name is required!");
-
-  try {
-    const logContent = fs.readFileSync(`./logs/${args[0]}/logs-${args[0]}.log`, { encoding: "utf-8" });
-    return ctx.reply(logContent);
-  } catch (error) {
-    return ctx.reply(`No such ${args[0]} log file were found.`);
-  }
+  await logsCommand(ctx);
 });
 
 bot.command("new", async (ctx) => {
-  let args = ctx.update.message.text.split(" ");
-  args.shift();
-
-  const [name, host, port, user, password] = args;
-
-  if (!name || !host || !port || !user || !password) return ctx.reply("usage: /new db_name db_host db_port db_username db_password\n\n* empty password? just use %empty%");
-
-  const get = await db.get("databases");
-  if (get && get.find((x: any) => x.name === name)) return ctx.reply("Databases already exists!");
-
-  await db.push("databases", { name, host, port, user, password: password === "%empty%" ? "" : password });
-  ctx.reply("Successfully added!");
+  await dbNewCommand(ctx);
 });
 
 bot.command("edit", async (ctx) => {
-  let args = ctx.update.message.text.split(" ");
-  args.shift();
-
-  let [name, type, new_value] = args;
-  const types = "name, host, port, user, password";
-
-  if (!name || !type || !new_value || !types.split(", ").includes(type)) return ctx.reply(`usage: /edit db_name type new_value\n\n- Available types: ${types}.`);
-
-  let get = await db.get("databases");
-  let database = get.find((x: any) => x.name === name);
-  if (!database) return ctx.reply("Database doesn't exists!");
-
-  let edited: any = {
-    name: database.name,
-    host: database.host,
-    port: database.port,
-    user: database.username,
-    password: database.password,
-  };
-
-  if (new_value === "%empty%") new_value = "";
-  edited[type] = new_value;
-
-  await db.pull("databases", (x: any) => x.name === database.name);
-  await db.push("databases", edited);
-  ctx.reply("Successfully edited!");
+  await dbEditCommand(ctx);
 });
 
 bot.command("list", async (ctx) => {
-  let get = await db.get("databases");
-  let arr: any = [];
-
-  if (!get) return ctx.reply("empty.");
-
-  get.map((x: any) => arr.push(x.name));
-  ctx.reply(arr.join(", "));
+  await dbListCommand(ctx);
 });
 
 bot.command("view", async (ctx) => {
-  let args = ctx.update.message.text.split(" ");
-  args.shift();
-
-  if (!args.length) return ctx.reply("argument needed!");
-  let get = await db.get("databases");
-  let database = get.find((x: any) => x.name === args[0]);
-  if (!database) return ctx.reply("Database doesn't exists!");
-
-  ctx.reply(`Name: ${database.name}\nHost: ${database.host}:${database.port}\nUser: ${database.user}\nPassword: ${database.password}`);
+  await dbViewCommand(ctx);
 });
 
 bot.command("delete", async (ctx) => {
-  let get = await db.get("databases");
-
-  if (!get) return ctx.reply("You dont have any website to delete!");
-  let button: any = [];
-
-  get.map((x: any) => button.push(Markup.button.callback(x.name, `delete ${x.name}`)));
-
-  ctx.reply("Choose database that you want to delete:", {
-    ...Markup.inlineKeyboard(button),
-  });
+  await dbDeleteCommand(ctx);
 });
 
 bot.command("dump", async (ctx) => {
-  let get = await db.get("databases");
-
-  if (!get) return ctx.reply("You dont have any website to dump!");
-  let button: any = [];
-
-  get.map((x: any) => button.push(Markup.button.callback(x.name, `backup ${x.name}`)));
-
-  ctx.reply("Choose database that you want to dump:", {
-    ...Markup.inlineKeyboard(button),
-  });
+  await dbDumpCommand(ctx);
 });
 
 bot.action(/.+/, async (ctx) => {
@@ -273,3 +188,5 @@ bot.launch();
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+export { db };

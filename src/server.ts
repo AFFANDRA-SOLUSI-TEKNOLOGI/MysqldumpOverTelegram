@@ -119,8 +119,6 @@ bot.use(async (ctx: Context, next) => {
   next();
 });
 
-bot.start((ctx) => ctx.reply("Hello World"));
-
 bot.action(/.+/, async (ctx) => {
   let text = ctx.match[0];
   let args = text.split(" ");

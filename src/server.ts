@@ -110,14 +110,15 @@ cron.schedule(config.cron, async () => {
   timezone: config.timezone
 });
 
-const CommandHandler = new TelegrafCommandHandler({ path: path.resolve() + "/dist/commands" });
-bot.use(CommandHandler.load());
 bot.use(async (ctx: Context, next) => {
   if (!ctx.from) return;
 
   if (!config.telegram.whitelisted_user_id.includes(ctx.from.id.toString())) return ctx.reply(`👀`);
   next();
 });
+
+const CommandHandler = new TelegrafCommandHandler({ path: path.resolve() + "/dist/commands" });
+bot.use(CommandHandler.load());
 
 bot.action(/.+/, async (ctx) => {
   let text = ctx.match[0];

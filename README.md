@@ -1,6 +1,6 @@
 # mysqldump Over Telegram
 
-A simple code that will backup your MySQL database on a schedule with `mysqloverdump` and send the files to Telegram as a file hosting. *Pssttt... You can also back up multiple databases at once.*
+A simple code that will backup your MySQL database on a schedule with `mysqldump` and send the files to Telegram as a file hosting. *Pssttt... You can also back up multiple databases at once.*
 
 ## Self Hosted
 

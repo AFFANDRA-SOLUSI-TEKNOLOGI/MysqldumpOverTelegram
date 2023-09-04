@@ -8,6 +8,7 @@ import express from "express";
 import mysqldump, { ConnectionOptions } from "mysqldump";
 
 import { Telegraf, Context, Markup } from "telegraf";
+import { TelegrafCommandHandler } from "telegraf-command-handler";
 import { ConnectionConfig, createConnection } from "mysql";
 import { QuickDB, JSONDriver } from "quick.db";
 
@@ -17,15 +18,6 @@ import { config } from "./config";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-
-import logsCommand from "./commands/logs";
-import dbGetCommand from "./commands/database/dbGet";
-import dbNewCommand from "./commands/database/dbNew";
-import dbEditCommand from "./commands/database/dbEdit";
-import dbListCommand from "./commands/database/dbList";
-import dbViewCommand from "./commands/database/dbView";
-import dbDeleteCommand from "./commands/database/dbDelete";
-import dbDumpCommand from "./commands/database/dbDump";
 
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
@@ -118,6 +110,8 @@ cron.schedule(config.cron, async () => {
   timezone: config.timezone
 });
 
+const CommandHandler = new TelegrafCommandHandler({ path: path.resolve() + "/dist/commands" });
+bot.use(CommandHandler.load());
 bot.use(async (ctx: Context, next) => {
   if (!ctx.from) return;
 
@@ -126,38 +120,6 @@ bot.use(async (ctx: Context, next) => {
 });
 
 bot.start((ctx) => ctx.reply("Hello World"));
-
-bot.command("get", async (ctx) => {
-  await dbGetCommand(ctx);
-});
-
-bot.command("logs", async (ctx) => {
-  await logsCommand(ctx);
-});
-
-bot.command("new", async (ctx) => {
-  await dbNewCommand(ctx);
-});
-
-bot.command("edit", async (ctx) => {
-  await dbEditCommand(ctx);
-});
-
-bot.command("list", async (ctx) => {
-  await dbListCommand(ctx);
-});
-
-bot.command("view", async (ctx) => {
-  await dbViewCommand(ctx);
-});
-
-bot.command("delete", async (ctx) => {
-  await dbDeleteCommand(ctx);
-});
-
-bot.command("dump", async (ctx) => {
-  await dbDumpCommand(ctx);
-});
 
 bot.action(/.+/, async (ctx) => {
   let text = ctx.match[0];

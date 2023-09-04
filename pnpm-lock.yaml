@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -29,6 +29,9 @@ dependencies:
   telegraf:
     specifier: ^4.12.2
     version: 4.12.2
+  telegraf-command-handler:
+    specifier: ^1.0.8
+    version: 1.0.8
   write-file-atomic:
     specifier: ^5.0.1
     version: 5.0.1
@@ -964,6 +967,15 @@ packages:
     dependencies:
       ansi-regex: 6.0.1
     dev: true
+
+  /telegraf-command-handler@1.0.8:
+    resolution: {integrity: sha512-knBZws2lNHilXZ8BBMUWfwp8gik1tGfRKTP/VLDMK0s4lOwVONU8urhhu/VEWQDofkcCJ0Wstel5MiHF5Jbpvw==}
+    dependencies:
+      telegraf: 4.12.2
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
 
   /telegraf@4.12.2:
     resolution: {integrity: sha512-PgwqI4wD86cMqVfFtEM9JkGGnMHgvgLJbReZMmwW4z35QeOi4DvbdItONld4bPnYn3A1jcO0SRKs0BXmR+x+Ew==}

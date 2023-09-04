@@ -20,6 +20,7 @@
     "node-cron": "^3.0.2",
     "quick.db": "^9.1.7",
     "telegraf": "^4.12.2",
+    "telegraf-command-handler": "^1.0.8",
     "write-file-atomic": "^5.0.1"
   },
   "devDependencies": {

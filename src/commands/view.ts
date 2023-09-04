@@ -3,6 +3,7 @@ import { db } from "../server";
 
 module.exports = {
   name: "view",
+  description: "Show selected database detail.",
   async execute(ctx: Context, args: string[]) {   
       if (!args.length) return ctx.reply("argument needed!");
       let get = await db.get("databases");

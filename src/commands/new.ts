@@ -3,6 +3,7 @@ import { db } from "../server";
 
 module.exports = {
   name: "new",
+  description: "Add new database.",
   async execute(ctx: Context, args: string[]) {
       const [name, host, port, user, password] = args;
 

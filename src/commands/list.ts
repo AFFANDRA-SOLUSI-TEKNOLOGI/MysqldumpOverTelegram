@@ -3,6 +3,7 @@ import { db } from "../server";
 
 module.exports = {
   name: "list",
+  description: "Show all database.",
   async execute(ctx: Context) {
       let get = await db.get("databases");
       let arr: any = [];

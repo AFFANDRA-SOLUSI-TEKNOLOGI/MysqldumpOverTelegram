@@ -27,4 +27,11 @@ declare global {
       dayjs: DayjsConfig;
       logs: boolean;
   }
+
+  interface CommandMapOptions {
+    name: string;
+    aliases?: string[];
+    description?: string;
+    execute: Promise<any>;
+  }
 }

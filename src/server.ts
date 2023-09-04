@@ -12,6 +12,7 @@ import { TelegrafCommandHandler } from "telegraf-command-handler";
 import { ConnectionConfig, createConnection } from "mysql";
 import { QuickDB, JSONDriver } from "quick.db";
 
+import { registerBotCommands } from "./utils/registerBotCommands";
 import { createLog } from "./utils/logs";
 import { config } from "./config";
 
@@ -147,10 +148,11 @@ bot.action(/.+/, async (ctx) => {
 app.get("/", (req, res) => res.sendStatus(200));
 app.listen(process.env.PORT, () => console.log("App listening on port", process.env.PORT));
 
+registerBotCommands();
 bot.launch();
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
-export { db, CommandHandler };
+export { db, CommandHandler, bot };

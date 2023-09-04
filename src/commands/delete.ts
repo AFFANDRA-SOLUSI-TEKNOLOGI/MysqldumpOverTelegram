@@ -3,6 +3,7 @@ import { db } from "../server";
 
 module.exports = {
   name: "delete",
+  description: "Delete selected database.",
   async execute(ctx: Context) {
       let get = await db.get("databases");
 

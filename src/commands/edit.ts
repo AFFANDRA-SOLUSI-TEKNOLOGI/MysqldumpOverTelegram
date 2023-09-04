@@ -3,6 +3,7 @@ import { db } from "../server";
 
 module.exports = {
   name: "edit",
+  description: "Edit specific database detail.",
   async execute(ctx: Context, args: string[]) {
       let [name, type, new_value] = args;
       const types = "name, host, port, user, password";

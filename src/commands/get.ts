@@ -4,6 +4,7 @@ import { db } from "../server";
 
 module.exports = {
   name: "get",
+  description: "Get dump file by date and database name.",
   async execute(ctx: Context, args: string[]) {
       if (args.length < 2) return ctx.reply("needed args: DD/MM/YY databasename");
 

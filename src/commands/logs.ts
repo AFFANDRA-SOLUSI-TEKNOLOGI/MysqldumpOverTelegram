@@ -5,6 +5,7 @@ import path from "path";
 
 module.exports = {
   name: "logs",
+  description: "Get a log file.",
   async execute(ctx: Context, args: string[]) {
     if (!config.logs) return ctx.reply("Logs system are disabled.");
 

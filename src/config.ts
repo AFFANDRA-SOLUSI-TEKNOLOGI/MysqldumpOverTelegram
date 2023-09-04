@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const config: Config = {
-  cron: "59 23 * * *",
+  cron: "59 23 * * *", // 23.59
   timezone: "Asia/Jakarta",
   telegram: {
     bot_token: process.env.TG_BOT_TOKEN || "",

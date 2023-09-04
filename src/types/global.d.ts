@@ -9,7 +9,6 @@ declare global {
 
   interface DayjsConfig {
       locale: any;
-      timezone: string;
       format: string;
   }
 
@@ -23,6 +22,7 @@ declare global {
 
   interface Config {
       cron: string;
+      timezone: string;
       telegram: TelegramConfig;
       dayjs: DayjsConfig;
       logs: boolean;

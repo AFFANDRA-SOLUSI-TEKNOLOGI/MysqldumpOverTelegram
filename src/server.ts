@@ -45,7 +45,7 @@ const main = (database: DatabaseConfig) => {
     port: database.port || 3306,
   };
 
-  const dateNow = dayjs().tz(config.dayjs.timezone);
+  const dateNow = dayjs().tz(config.timezone);
   const formattedDate = dateNow.format(config.dayjs.format);
   const backupFilename = `${database.name} ${formattedDate}.sql`;
   const backupPath = path.join(__dirname, "tmp", database.name);
@@ -113,6 +113,9 @@ cron.schedule(config.cron, async () => {
   databases.forEach((database: DatabaseConfig) => {
     main(database);
   });
+}, {
+  scheduled: true,
+  timezone: config.timezone
 });
 
 bot.use(async (ctx: Context, next) => {

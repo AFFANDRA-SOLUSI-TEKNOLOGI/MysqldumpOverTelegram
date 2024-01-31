@@ -40,7 +40,7 @@ const main = (database: DatabaseConfig) => {
 
   const dateNow = dayjs().tz(config.timezone);
   const formattedDate = dateNow.format(config.dayjs.format);
-  const backupFilename = `${database.name} ${formattedDate}.sql`;
+  const backupFilename = `${database.name} ${formattedDate}.sql.gz`;
   const backupPath = path.join(__dirname, "tmp", database.name);
   const dumpPath = `${backupPath}/${backupFilename}`;
 

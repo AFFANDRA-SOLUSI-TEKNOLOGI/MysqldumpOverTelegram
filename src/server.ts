@@ -76,7 +76,7 @@ const main = (database: DatabaseConfig) => {
           let backupFileSizeInMegabytes = fs.statSync(dumpPath).size / (1024 * 1024);
 
           if (backupFileSizeInMegabytes > 49) {
-            await bot.telegram.sendMessage(process.env.TG_CHAT_ID, backupFilename.concat(` is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`));
+            await bot.telegram.sendMessage(config.telegram.chat_id, backupFilename.concat(` is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`));
             await removeYesterdayBackup(backupPath);
           } else {
             let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {

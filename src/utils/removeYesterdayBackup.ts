@@ -9,7 +9,7 @@ const isFileCreatedToday = (filePath: string): boolean => {
   return isToday;
 };
 
-const removeYesterdayBackup = async (backupPath: string): Promise<void> => {
+const removeYesterdayBackup = (backupPath: string): void => {
   try {
     const files = fs.readdirSync(backupPath);
 

@@ -16,6 +16,8 @@ import { registerBotCommands } from "./utils/registerBotCommands";
 import { createLog } from "./utils/logs";
 import { config } from "./config";
 
+import removeYesterdayBackup from "./utils/removeYesterdayBackup";
+
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -71,13 +73,20 @@ const main = (database: DatabaseConfig) => {
             dumpToFile: dumpPath,
           });
 
-          let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {
-            source: fs.createReadStream(dumpPath),
-            filename: backupFilename,
-          });
+          let backupFileSizeInMegabytes = fs.statSync(dumpPath).size / (1024 * 1024);
 
-          await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
-          fs.rmSync(dumpPath);
+          if (backupFileSizeInMegabytes > 49) {
+            await bot.telegram.sendMessage(process.env.TG_CHAT_ID, backupFilename.concat(` is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`));
+            await removeYesterdayBackup(backupPath);
+          } else {
+            let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {
+              source: fs.createReadStream(dumpPath),
+              filename: backupFilename,
+            });
+
+            await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
+            fs.rmSync(dumpPath);
+          }
 
           if (config.logs) {
             createLog({
@@ -99,17 +108,21 @@ const main = (database: DatabaseConfig) => {
   });
 };
 
-cron.schedule(config.cron, async () => {
-  console.log("Starting cron job...");
-  const databases = await db.get("databases");
+cron.schedule(
+  config.cron,
+  async () => {
+    console.log("Starting cron job...");
+    const databases = await db.get("databases");
 
-  databases.forEach((database: DatabaseConfig) => {
-    main(database);
-  });
-}, {
-  scheduled: true,
-  timezone: config.timezone
-});
+    databases.forEach((database: DatabaseConfig) => {
+      main(database);
+    });
+  },
+  {
+    scheduled: true,
+    timezone: config.timezone,
+  }
+);
 
 bot.use(async (ctx: Context, next) => {
   if (!ctx.from) return;

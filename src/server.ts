@@ -76,36 +76,27 @@ const main = (database: DatabaseConfig) => {
             dumpToFile: dumpPath,
           });
 
-          let backupFileSizeInMegabytes = getFileSizeInMegabytes(dumpPath);
-
-          if (backupFileSizeInMegabytes > 49) {
-            await bot.telegram.sendMessage(config.telegram.chat_id, backupFilename.concat(` is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`));
-            removeYesterdayBackup(backupPath);
-
-            // compressFile(`${backupPath}/${backupFilename}.zip`, [{ path: dumpPath, name: backupFilename }], async (err, outputPath) => {
-            //   if (err) {
-            //     console.error("Error during compression", err);
-            //     return;
-            //   }
-            //   if (outputPath) {
-            //     const compressedFileSizeInMegabytes = getFileSizeInMegabytes(outputPath);
-            //     if (compressedFileSizeInMegabytes > 49) {
-            //       await bot.telegram.sendMessage(
-            //         config.telegram.chat_id,
-            //         backupFilename.concat(`.zip is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`)
-            //       );
-            //       removeYesterdayBackup(backupPath);
-            //     } else {
-            //       await sendToTelegram(`${backupPath}\\${backupFilename}.zip`, backupFilename.concat(".zip"), connectionConfig as ConnectionConfig);
-            //       fs.rmSync(`${backupPath}\\${backupFilename}.zip`);
-            //       fs.rmSync(dumpPath);
-            //     }
-            //   }
-            // });
-          } else {
-            await sendToTelegram(dumpPath, backupFilename, connectionConfig as ConnectionConfig);
-            fs.rmSync(dumpPath);
-          }
+          compressFile(`${backupPath}/${backupFilename}.zip`, [{ path: dumpPath, name: backupFilename }], async (err, outputPath) => {
+            if (err) {
+              console.error("Error during compression", err);
+              return;
+            }
+            
+            if (outputPath) {
+              const compressedFileSizeInMegabytes = getFileSizeInMegabytes(outputPath);
+              if (compressedFileSizeInMegabytes > 49) {
+                await bot.telegram.sendMessage(
+                  config.telegram.chat_id,
+                  backupFilename.concat(`.zip is reaching max limit size (50MB) with total of ${compressedFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`)
+                );
+                removeYesterdayBackup(backupPath);
+              } else {
+                await sendToTelegram(outputPath, backupFilename.concat(".zip"), connectionConfig as ConnectionConfig);
+                fs.rmSync(outputPath);
+                fs.rmSync(dumpPath);
+              }
+            }
+          });
 
           if (config.logs) {
             createLog({

@@ -8,12 +8,14 @@ import { ConnectionConfig } from "mysql";
 const sendToTelegram = async (filePath: string, backupFilename: string, connectionConfig: ConnectionConfig): Promise<void> => {
   try {
     const dateNow = dayjs().tz(config.timezone);
-    let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {
+    let result = await bot.telegram.sendDocument(config.telegram.chat_id, {
       source: fs.createReadStream(filePath),
       filename: backupFilename,
     });
 
-    await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
+    console.log(result);
+
+    await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, result.message_id);
   } catch (error) {
     console.error(`SEND TO TELEGRAM ERR `, error);
   }

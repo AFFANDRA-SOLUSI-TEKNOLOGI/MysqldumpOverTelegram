@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
 
-const createLog = (database: { date: string; name: string }) => {
+type Database = {
+  date: string;
+  name: string;
+};
+
+const createLog = (database: Database) => {
   try {
     const timestamp = new Date().toISOString();
     const logsPath = path.join(__dirname, "../logs", database.name.split(" ")[0]);

@@ -16,11 +16,14 @@ import { registerBotCommands } from "./utils/registerBotCommands";
 import { createLog } from "./utils/logs";
 import { config } from "./config";
 
-import removeYesterdayBackup from "./utils/removeYesterdayBackup";
-
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+
+import compressFile from "./utils/compressFile";
+import getFileSizeInMegabytes from "./utils/getFileSizeInMegabytes";
+import sendToTelegram from "./utils/sendToTelegram";
+import removeYesterdayBackup from "./utils/removeYesterdayBackup";
 
 dayjs.locale(config.dayjs.locale);
 dayjs.extend(utc);
@@ -73,18 +76,33 @@ const main = (database: DatabaseConfig) => {
             dumpToFile: dumpPath,
           });
 
-          let backupFileSizeInMegabytes = fs.statSync(dumpPath).size / (1024 * 1024);
+          let backupFileSizeInMegabytes = getFileSizeInMegabytes(dumpPath);
 
           if (backupFileSizeInMegabytes > 49) {
-            await bot.telegram.sendMessage(config.telegram.chat_id, backupFilename.concat(` is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`));
-            removeYesterdayBackup(backupPath);
-          } else {
-            let sendToTelegram = await bot.telegram.sendDocument(config.telegram.chat_id, {
-              source: fs.createReadStream(dumpPath),
-              filename: backupFilename,
-            });
+            compressFile(`${backupPath}/${backupFilename}.zip`, [{ path: dumpPath, name: backupFilename }], async (err, outputPath) => {
+              if (err) {
+                console.error("Error during compression", err);
+                return;
+              }
 
-            await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, sendToTelegram.message_id);
+              if (outputPath) {
+                const compressedFileSizeInMegabytes = getFileSizeInMegabytes(outputPath);
+
+                if (compressedFileSizeInMegabytes > 49) {
+                  await bot.telegram.sendMessage(
+                    config.telegram.chat_id,
+                    backupFilename.concat(`.zip is reaching max limit size (50MB) with total of ${backupFileSizeInMegabytes.toFixed(2).toString()} MB, will be stored in machine instead`)
+                  );
+                  removeYesterdayBackup(backupPath);
+                } else {
+                  await sendToTelegram(`${backupPath}\\${backupFilename}.zip`, backupFilename.concat(".zip"), connectionConfig as ConnectionConfig);
+                  fs.rmSync(`${backupPath}\\${backupFilename}.zip`);
+                  fs.rmSync(dumpPath);
+                }
+              }
+            });
+          } else {
+            await sendToTelegram(dumpPath, backupFilename, connectionConfig as ConnectionConfig);
             fs.rmSync(dumpPath);
           }
 

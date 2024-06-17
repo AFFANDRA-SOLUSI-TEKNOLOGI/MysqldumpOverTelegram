@@ -95,6 +95,7 @@ const main = (database: DatabaseConfig) => {
                   );
                   removeYesterdayBackup(backupPath);
                 } else {
+                  console.log("sending zip file to telegram");
                   await sendToTelegram(`${backupPath}\\${backupFilename}.zip`, backupFilename.concat(".zip"), connectionConfig as ConnectionConfig);
                   fs.rmSync(`${backupPath}\\${backupFilename}.zip`);
                   fs.rmSync(dumpPath);

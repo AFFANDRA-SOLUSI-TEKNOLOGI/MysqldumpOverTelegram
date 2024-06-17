@@ -13,11 +13,9 @@ const sendToTelegram = async (filePath: string, backupFilename: string, connecti
       filename: backupFilename,
     });
 
-    console.log(result);
-
     await db.push(`${dateNow.format("DD/MM/YY")}.${connectionConfig.database}`, result.message_id);
   } catch (error) {
-    console.log(`SEND TO TELEGRAM ERR `, error);
+    console.error(`SEND TO TELEGRAM ERR `, error);
   }
 };
 

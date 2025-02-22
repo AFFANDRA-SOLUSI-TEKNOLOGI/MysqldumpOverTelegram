@@ -13,7 +13,7 @@ module.exports = {
       get.map((x: any) => button.push(Markup.button.callback(x.name, `backup ${x.name}`)));
     
       ctx.reply("Choose database that you want to dump:", {
-        ...Markup.inlineKeyboard(button),
+        ...Markup.inlineKeyboard(button, { columns: 2 }),
       });
   }
 }
